@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EXPENSE TRACKER // v1.0</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+
+    <!-- Grain texture overlay -->
+    <svg class="grain-overlay" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <filter id="grain-filter">
+            <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="4" stitchTiles="stitch"/>
+            <feColorMatrix type="saturate" values="0"/>
+        </filter>
+        <rect width="100%" height="100%" filter="url(#grain-filter)"/>
+    </svg>
+
+    <!-- ── HEADER ─────────────────────────────────────────── -->
+    <header class="site-header">
+        <div class="header-inner">
+            <div class="header-tag">SYS // ACTIVE &nbsp;|&nbsp; TERMINAL FINANCIER</div>
+            <h1 class="header-title">EXPENSE TRACKER</h1>
+            <p class="header-subtitle">SYSTÈME DE GESTION // v1.0</p>
+        </div>
+        <div class="scanlines" aria-hidden="true"></div>
+    </header>
+
+    <main class="main-content">
+
+        <!-- ── 01. JUSTIFICATIF ──────────────────────────── -->
+        <section class="section">
+            <div class="section-number">01. —</div>
+            <h2 class="section-title">JUSTIFICATIF</h2>
+
+            <form id="upload-form"
+                  hx-post="/api/analyze"
+                  hx-target="#form-container"
+                  hx-swap="innerHTML"
+                  hx-encoding="multipart/form-data"
+                  hx-indicator="#loader">
+
+                <div class="drop-zone" id="drop-zone">
+                    <input type="file" id="file-input" name="file" accept="image/*" hidden>
+                    <img id="image-preview" src="" alt="Aperçu du justificatif">
+                    <div class="drop-zone-label" id="drop-label">
+                        <span class="drop-icon">+</span>
+                        <span>DROP ZONE — CLIQUER OU GLISSER</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-analyze">
+                    [ ANALYSER LE DOCUMENT ]
+                </button>
+
+            </form>
+
+            <div id="loader" class="loader htmx-indicator">
+                ANALYSE EN COURS...
+            </div>
+        </section>
+
+        <!-- ── 02. DONNÉES EXTRAITES ─────────────────────── -->
+        <section class="section">
+            <div class="section-number">02. —</div>
+            <h2 class="section-title">DONNÉES EXTRAITES</h2>
+            <div id="form-container"></div>
+        </section>
+
+        <!-- ── 03. CONFIRMATION ──────────────────────────── -->
+        <section class="section">
+            <div class="section-number">03. —</div>
+            <h2 class="section-title">CONFIRMATION</h2>
+            <div id="confirmation-container"></div>
+        </section>
+
+    </main>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

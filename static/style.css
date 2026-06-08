@@ -1,0 +1,465 @@
+/* ============================================================
+   IMPORTS — Google Fonts
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap');
+
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root {
+    --bg:           #0A0A0B;
+    --surface:      #111114;
+    --border:       #2A2A2E;
+    --accent:       #F59E0B;
+    --text:         #E8E6E1;
+    --text-muted:   #5A5A60;
+    --success:      #10B981;
+    --success-bg:   #0D1F17;
+    --error:        #EF4444;
+    --error-bg:     #1F0D0D;
+
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-mono:    'JetBrains Mono', 'Courier New', monospace;
+
+    --shadow-hard:        4px 4px 0px var(--border);
+    --shadow-hard-accent: 4px 4px 0px var(--accent);
+    --shadow-hard-success:4px 4px 0px var(--success);
+}
+
+/* ============================================================
+   RESET
+   ============================================================ */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    min-height: 100vh;
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+   GRAIN OVERLAY (SVG feTurbulence)
+   ============================================================ */
+.grain-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.04;
+    mix-blend-mode: overlay;
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.site-header {
+    position: relative;
+    background-color: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 52px 64px 48px;
+    overflow: hidden;
+}
+
+.header-inner {
+    position: relative;
+    z-index: 2;
+}
+
+.header-tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    opacity: 0.8;
+}
+
+.header-title {
+    font-family: var(--font-display);
+    font-size: 80px;
+    line-height: 0.95;
+    letter-spacing: 0.03em;
+    color: var(--text);
+    text-transform: uppercase;
+    text-shadow: 5px 5px 0px var(--accent);
+}
+
+.header-subtitle {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-muted);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-top: 14px;
+}
+
+/* Scanlines — CSS-only repeating gradient */
+.scanlines {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 3px,
+        rgba(0, 0, 0, 0.14) 3px,
+        rgba(0, 0, 0, 0.14) 4px
+    );
+}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.main-content {
+    max-width: 840px;
+    margin: 0 auto;
+    padding: 72px 32px 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 72px;
+}
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+.section {
+    position: relative;
+}
+
+.section-number {
+    font-family: var(--font-display);
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.35em;
+    margin-bottom: 6px;
+}
+
+.section-title {
+    font-family: var(--font-display);
+    font-size: 34px;
+    letter-spacing: 0.1em;
+    color: var(--text);
+    text-transform: uppercase;
+    margin-bottom: 28px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+/* ============================================================
+   DROP ZONE
+   ============================================================ */
+.drop-zone {
+    background-color: var(--surface);
+    border: 1px dashed var(--border);
+    cursor: crosshair;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 32px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-hard);
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.drop-zone:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-hard-accent);
+}
+
+.drop-zone.dragover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-hard-accent);
+    background-color: rgba(245, 158, 11, 0.04);
+}
+
+.drop-zone-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 11px;
+    font-weight: 500;
+    pointer-events: none;
+    user-select: none;
+}
+
+.drop-icon {
+    font-size: 36px;
+    line-height: 1;
+    color: var(--border);
+    font-family: var(--font-mono);
+    font-weight: 700;
+}
+
+/* Image preview — hidden until JS sets .visible */
+#image-preview {
+    display: none;
+    max-height: 300px;
+    max-width: 100%;
+    object-fit: contain;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-hard);
+}
+
+#image-preview.visible {
+    display: block;
+}
+
+/* ============================================================
+   BUTTONS — ANALYSER
+   ============================================================ */
+.btn-analyze {
+    display: block;
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 16px 32px;
+    cursor: pointer;
+    box-shadow: var(--shadow-hard-accent);
+    transition: background 150ms ease, color 150ms ease, box-shadow 80ms ease, transform 80ms ease;
+}
+
+.btn-analyze:hover {
+    background: var(--accent);
+    color: #000;
+}
+
+.btn-analyze:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px var(--accent);
+}
+
+/* ============================================================
+   LOADER
+   ============================================================ */
+.loader {
+    display: none;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    text-align: center;
+    margin-top: 18px;
+    animation: blink 0.9s step-end infinite;
+}
+
+/* HTMX shows .htmx-indicator only when request is in-flight */
+.htmx-indicator {
+    display: none;
+}
+
+.htmx-request .htmx-indicator,
+.htmx-indicator.htmx-request {
+    display: block;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0; }
+}
+
+/* ============================================================
+   INJECTED FORM — styles for HTML fragments from backend
+   ============================================================ */
+#form-container form {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.form-group:first-child {
+    border-top: 1px solid var(--border);
+}
+
+.form-group label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    width: 100%;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 0;
+}
+
+.form-group input[type="text"]:focus,
+.form-group input[type="number"]:focus,
+.form-group select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+}
+
+.form-group input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.5;
+}
+
+.form-group select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235A5A60'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+    cursor: pointer;
+}
+
+.form-group select option {
+    background: var(--surface);
+    color: var(--text);
+}
+
+/* Submit button — injected by backend */
+.btn-submit {
+    display: block;
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--success);
+    color: var(--success);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 16px 32px;
+    cursor: pointer;
+    box-shadow: var(--shadow-hard-success);
+    transition: background 150ms ease, color 150ms ease, box-shadow 80ms ease, transform 80ms ease;
+    margin-top: 28px;
+    border-radius: 0;
+}
+
+.btn-submit:hover {
+    background: var(--success);
+    color: #000;
+}
+
+.btn-submit:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px var(--success);
+}
+
+/* Reset button — injected by backend in success state */
+.btn-reset {
+    display: inline-block;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 10px 24px;
+    cursor: pointer;
+    margin-top: 18px;
+    transition: border-color 150ms ease, color 150ms ease;
+    border-radius: 0;
+}
+
+.btn-reset:hover {
+    border-color: var(--text);
+    color: var(--text);
+}
+
+/* ============================================================
+   ALERTS — injected by backend
+   ============================================================ */
+.alert {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.8;
+    padding: 22px 24px;
+}
+
+.alert-success {
+    border-left: 3px solid var(--success);
+    background-color: var(--success-bg);
+    color: var(--success);
+    box-shadow: 4px 4px 0px rgba(16, 185, 129, 0.25);
+}
+
+.alert-error {
+    border-left: 3px solid var(--error);
+    background-color: var(--error-bg);
+    color: var(--error);
+    box-shadow: 4px 4px 0px rgba(239, 68, 68, 0.25);
+}
+
+.alert strong {
+    font-weight: 700;
+    color: inherit;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 640px) {
+    .site-header {
+        padding: 36px 24px 32px;
+    }
+
+    .header-title {
+        font-size: 52px;
+    }
+
+    .main-content {
+        padding: 48px 20px 64px;
+        gap: 52px;
+    }
+
+    .section-title {
+        font-size: 26px;
+    }
+}
