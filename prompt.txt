@@ -1,0 +1,14 @@
+Analyse cette note de frais et extrais les informations suivantes.
+
+Retourne uniquement un JSON avec exactement ces champs :
+
+{
+  "type_document": "restaurant | transport | hôtel | autre",
+  "fournisseur": "nom du commerce ou de la compagnie (ex: SNCF, Bistrot Paul, Ibis)",
+  "date": "date au format JJ/MM/AAAA, null si illisible",
+  "montant_ttc": "montant total TTC en euros, nombre décimal (ex: 24.50), null si illisible",
+  "tva": "montant de TVA en euros si visible sur le document, sinon null",
+  "devise": "devise utilisée, EUR par défaut si non précisé",
+  "description": "courte description du motif de la dépense en une phrase",
+  "confiance": "haute si tous les champs sont lisibles, moyen si quelques doutes, basse si document flou ou incomplet"
+}
