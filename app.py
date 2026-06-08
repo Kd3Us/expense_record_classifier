@@ -1,6 +1,5 @@
 import os
 import base64
-import uuid
 
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.staticfiles import StaticFiles
@@ -17,7 +16,7 @@ agent = ExpenseAgent()
 sheets_client = GoogleSheetsClient()
 
 ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 Mo
+MAX_FILE_SIZE = 10 * 1024 * 1024
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -29,7 +28,6 @@ async def index():
 
 @app.post("/api/analyze", response_class=HTMLResponse)
 async def analyze(file: UploadFile = File(...)):
-    # Validation du type MIME
     if file.content_type not in ALLOWED_MIME_TYPES:
         return HTMLResponse(
             content=_error_html(f"Type de fichier non supporté : {file.content_type}. Utilisez JPG, PNG ou WebP."),
@@ -38,7 +36,6 @@ async def analyze(file: UploadFile = File(...)):
 
     image_bytes = await file.read()
 
-    # Validation de la taille
     if len(image_bytes) > MAX_FILE_SIZE:
         return HTMLResponse(
             content=_error_html("Image trop volumineuse (maximum 10 Mo)."),
@@ -74,8 +71,8 @@ async def submit(
             "type_document": type_document or None,
             "fournisseur": fournisseur or None,
             "date": date or None,
-            "montant_ttc": float(montant_ttc) if montant_ttc else None,
-            "tva": float(tva) if tva else None,
+            "montant_ttc": _parse_float(montant_ttc),
+            "tva": _parse_float(tva),
             "devise": devise or "EUR",
             "description": description or None,
             "confiance": confiance or None,
@@ -83,8 +80,11 @@ async def submit(
 
         image_url = None
         if image_data:
-            image_bytes = base64.b64decode(image_data)
-            image_url = sheets_client.upload_image(image_bytes, image_media_type)
+            try:
+                image_bytes = base64.b64decode(image_data)
+                image_url = sheets_client.upload_image(image_bytes, image_media_type)
+            except Exception:
+                pass
 
         sheets_client.append_expense(data, image_url)
 
@@ -97,9 +97,13 @@ async def submit(
         )
 
 
-def _build_form_html(data: dict, image_b64: str, media_type: str) -> str:
-    """Construit le fragment HTML du formulaire pré-rempli retourné à HTMX."""
+def _parse_float(value: str) -> float | None:
+    if not value:
+        return None
+    return float(value.replace(",", "."))
 
+
+def _build_form_html(data: dict, image_b64: str, media_type: str) -> str:
     type_options = ["restaurant", "transport", "hôtel", "autre"]
     confiance_options = ["haute", "moyen", "basse"]
 
@@ -133,11 +137,11 @@ def _build_form_html(data: dict, image_b64: str, media_type: str) -> str:
         </div>
         <div class="form-group">
             <label>Montant TTC (€)</label>
-            <input type="number" step="0.01" name="montant_ttc" value="{field_value("montant_ttc")}">
+            <input type="text" name="montant_ttc" value="{field_value("montant_ttc")}">
         </div>
         <div class="form-group">
             <label>TVA (€)</label>
-            <input type="number" step="0.01" name="tva" value="{field_value("tva")}">
+            <input type="text" name="tva" value="{field_value("tva")}">
         </div>
         <div class="form-group">
             <label>Devise</label>
@@ -156,7 +160,7 @@ def _build_form_html(data: dict, image_b64: str, media_type: str) -> str:
         <input type="hidden" name="image_media_type" value="{media_type}">
 
         <button type="submit" class="btn-submit">
-            Envoyer vers le Google Sheet
+            ENVOYER VERS LE GOOGLE SHEET
         </button>
     </form>
     """
@@ -167,7 +171,7 @@ def _success_html(fournisseur: str, montant: str) -> str:
     <div class="alert alert-success">
         ✅ Note de frais <strong>{fournisseur}</strong> ({montant} €) enregistrée avec succès !
         <br><br>
-        <button onclick="resetApp()" class="btn-reset">Nouvelle note de frais</button>
+        <button onclick="resetApp()" class="btn-reset">NOUVELLE NOTE DE FRAIS</button>
     </div>
     """
 
