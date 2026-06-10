@@ -1,7 +1,8 @@
 import os
 import base64
+import html
 
-from fastapi import FastAPI, File, UploadFile, Form
+from fastapi import FastAPI, File, UploadFile, Form, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse
 from dotenv import load_dotenv
@@ -12,6 +13,14 @@ from sheets import GoogleSheetsClient
 load_dotenv()
 
 app = FastAPI()
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return HTMLResponse(
+        content=_error_html(f"Erreur interne : {str(exc)}"),
+        status_code=500
+    )
+
 agent = ExpenseAgent()
 sheets_client = GoogleSheetsClient()
 
@@ -116,7 +125,7 @@ def _build_form_html(data: dict, image_b64: str, media_type: str) -> str:
 
     def field_value(key: str) -> str:
         val = data.get(key)
-        return str(val) if val is not None else ""
+        return html.escape(str(val), quote=True) if val is not None else ""
 
     return f"""
     <form hx-post="/api/submit"
@@ -169,7 +178,7 @@ def _build_form_html(data: dict, image_b64: str, media_type: str) -> str:
 def _success_html(fournisseur: str, montant: str) -> str:
     return f"""
     <div class="alert alert-success">
-        ✅ Note de frais <strong>{fournisseur}</strong> ({montant} €) enregistrée avec succès !
+        ✅ Note de frais <strong>{html.escape(fournisseur, quote=True)}</strong> ({html.escape(montant, quote=True)} €) enregistrée avec succès !
         <br><br>
         <button onclick="resetApp()" class="btn-reset">NOUVELLE NOTE DE FRAIS</button>
     </div>
@@ -177,4 +186,4 @@ def _success_html(fournisseur: str, montant: str) -> str:
 
 
 def _error_html(message: str) -> str:
-    return f'<div class="alert alert-error">❌ {message}</div>'
+    return f'<div class="alert alert-error">❌ {html.escape(message, quote=True)}</div>'

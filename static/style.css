@@ -186,7 +186,7 @@ body {
     box-shadow: var(--shadow-hard-accent);
 }
 
-.drop-zone.dragover {
+.drop-zone.drag-over {
     border-color: var(--accent);
     box-shadow: var(--shadow-hard-accent);
     background-color: rgba(245, 158, 11, 0.04);
