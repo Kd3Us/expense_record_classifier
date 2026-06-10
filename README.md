@@ -1,24 +1,26 @@
 # Expense Tracker — Application Agentique de Gestion des Notes de Frais
 
-Application web agentique permettant à un salarié de photographier une note de frais (ticket de restaurant, billet de train, facture d'hôtel...), d'en extraire automatiquement les informations via un modèle de vision, de les corriger dans un formulaire éditable, puis de les synchroniser dans un Google Sheet partagé avec le service comptabilité. L'image du justificatif est archivée sur Google Drive et référencée dans le Sheet.
+Application web agentique permettant à un salarié de photographier une note de frais (ticket de restaurant, billet de train, facture d'hôtel...), d'en extraire automatiquement les informations via un modèle de vision, de les corriger dans un formulaire éditable, puis de les synchroniser dans un Google Sheet partagé avec le service comptabilité. L'image du justificatif est archivée sur **Supabase Storage** et référencée dans le Sheet via la formule `=IMAGE(url)`.
 
 Projet réalisé dans la continuité du TP *Handcrafted Google Lens*.
+
+> **Note** : le sujet initial prévoyait un stockage des images sur Google Drive. Le choix de Supabase Storage (validé avec l'enseignant) simplifie l'obtention d'une URL publique tout en conservant un résultat fonctionnellement identique côté Google Sheet.
 
 ## Fonctionnement
 
 1. **Upload** — L'utilisateur dépose ou photographie un justificatif (JPG, PNG, WebP — 10 Mo max).
 2. **Extraction IA** — Le backend envoie l'image au modèle de vision `meta-llama/llama-4-scout-17b-16e-instruct` (via l'API Groq) qui retourne un JSON structuré.
 3. **Édition** — Les champs extraits sont affichés dans un formulaire pré-rempli et entièrement modifiable.
-4. **Soumission** — À la validation, l'image est uploadée sur Google Drive et une ligne est ajoutée au Google Sheet avec les valeurs (éventuellement corrigées) et la formule `=IMAGE(url)`.
+4. **Soumission** — À la validation, l'image est uploadée sur Supabase Storage et une ligne est ajoutée au Google Sheet avec les valeurs (éventuellement corrigées) et la formule `=IMAGE(url)`.
 
 ## Stack technique
 
-| Composant   | Technologie                                          |
-|-------------|------------------------------------------------------|
+| Composant   | Technologie                                              |
+|-------------|----------------------------------------------------------|
 | Modèle IA   | `meta-llama/llama-4-scout-17b-16e-instruct` via SDK Groq |
-| Backend     | Python · FastAPI                                     |
-| Frontend    | HTML · HTMX · CSS · JS Vanilla                       |
-| Intégration | Google Sheets API (`gspread`) · Google Drive API     |
+| Backend     | Python · FastAPI                                         |
+| Frontend    | HTML · HTMX · CSS · JS Vanilla                           |
+| Intégration | Google Sheets API (`gspread`) · Supabase Storage         |
 
 ## Structure du projet
 
@@ -26,7 +28,7 @@ Projet réalisé dans la continuité du TP *Handcrafted Google Lens*.
 expense-tracker/
 ├── backend.py        # Classe ExpenseAgent — logique IA (extraction vision)
 ├── app.py            # Serveur FastAPI — routes et orchestration
-├── sheets.py         # Classe GoogleSheetsClient — Google Sheets + Drive
+├── sheets.py         # Classe GoogleSheetsClient — Google Sheets + Supabase Storage
 ├── context.txt       # Prompt système du modèle
 ├── prompt.txt        # Prompt utilisateur envoyé avec l'image
 ├── requirements.txt
@@ -55,9 +57,7 @@ pip install -r requirements.txt
 ### 2. Configuration Google Cloud
 
 1. Créer un projet sur [console.cloud.google.com](https://console.cloud.google.com) (ex : `expense-tracker-tp`).
-2. Dans **API et services > Bibliothèque**, activer :
-   - **Google Sheets API**
-   - **Google Drive API**
+2. Dans **API et services > Bibliothèque**, activer la **Google Sheets API**.
 3. Dans **API et services > Identifiants**, créer un **compte de service** (ex : `expense-agent`) avec le rôle Éditeur, puis télécharger sa **clé JSON**.
    ⚠️ Ne jamais commiter ce fichier — il est exclu par le `.gitignore` (`*.json`).
 
@@ -69,7 +69,15 @@ pip install -r requirements.txt
 3. **Partager le Sheet** avec l'adresse email du compte de service (du type `expense-agent@expense-tracker-tp.iam.gserviceaccount.com`) en rôle **Éditeur**.
 4. Copier l'ID du Sheet depuis l'URL (la chaîne entre `/d/` et `/edit`).
 
-### 4. Variables d'environnement
+### 4. Configuration Supabase
+
+1. Créer un projet sur [supabase.com](https://supabase.com).
+2. Dans **Storage**, créer un bucket nommé `expense-receipts` et le rendre **public** (nécessaire pour que la formule `=IMAGE(url)` fonctionne dans le Sheet).
+3. Récupérer dans **Project Settings > API** :
+   - l'**URL du projet** (`SUPABASE_URL`)
+   - la **clé anonyme** (`SUPABASE_ANON_KEY`)
+
+### 5. Variables d'environnement
 
 Copier `.env.example` vers `.env` et renseigner :
 
@@ -77,9 +85,13 @@ Copier `.env.example` vers `.env` et renseigner :
 GROQ_API_KEY="votre_cle_groq"
 GOOGLE_SHEET_ID="id_du_google_sheet"
 GOOGLE_SERVICE_ACCOUNT_JSON="chemin/vers/credentials.json"
+SUPABASE_URL="https://votre-projet.supabase.co"
+SUPABASE_ANON_KEY="votre_cle_anon"
 ```
 
-### 5. Lancer l'application
+Les cinq variables sont obligatoires : l'application refuse de démarrer si l'une d'elles est absente.
+
+### 6. Lancer l'application
 
 ```bash
 uvicorn app:app --reload
@@ -95,7 +107,7 @@ Tester l'extraction seule (sans le frontend) :
 python backend.py chemin/vers/ticket.jpg
 ```
 
-Tester l'intégration Google Sheets de manière isolée (pousse une ligne factice) :
+Tester l'intégration Google Sheets + Supabase de manière isolée (pousse une ligne factice) :
 
 ```bash
 python sheets.py
@@ -124,7 +136,7 @@ Si un champ est illisible ou absent du document, le modèle retourne `null` pour
 |---------|----------------|--------------------------------------------------------------------|
 | GET     | `/`            | Sert l'interface (`static/index.html`)                             |
 | POST    | `/api/analyze` | Reçoit l'image en multipart, retourne le formulaire HTML pré-rempli |
-| POST    | `/api/submit`  | Reçoit les champs du formulaire, upload l'image sur Drive, ajoute la ligne au Sheet |
+| POST    | `/api/submit`  | Reçoit les champs du formulaire, upload l'image sur Supabase Storage, ajoute la ligne au Sheet |
 
 Les routes retournent des **fragments HTML** (pattern HTMX), jamais de JSON brut — y compris pour les erreurs.
 
@@ -132,4 +144,5 @@ Les routes retournent des **fragments HTML** (pattern HTMX), jamais de JSON brut
 
 - `.env` et les clés JSON de compte de service sont exclus du dépôt via `.gitignore`.
 - Validation du type MIME (`image/jpeg`, `image/png`, `image/webp`) et de la taille (10 Mo max) côté serveur.
-- En cas de fuite de credentials : révoquer et régénérer la clé depuis la Google Cloud Console.
+- Le bucket Supabase est public en **lecture seule** : l'écriture passe par la clé API, jamais exposée côté client.
+- En cas de fuite de credentials : révoquer et régénérer les clés depuis la Google Cloud Console et le dashboard Supabase.
